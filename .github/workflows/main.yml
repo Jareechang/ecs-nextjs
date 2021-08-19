@@ -17,6 +17,7 @@ jobs:
       - run: yarn build
 
       - name: optimize node_modules
+        uses: actions/checkout@v2
       - run: yarn install --production --ignore-scripts --prefer-offline
 
       - name: Configure AWS credentials
