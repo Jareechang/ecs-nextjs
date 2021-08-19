@@ -27,6 +27,34 @@ docker build -t ecs-nextjs .
 docker run -d -p 3000:3000 -e PORT=3000 ecs-nextjs:latest
 ```
 
+### Infrastructure setup 
+
+**Setup AWS envronment:**
+```
+terraform init
+terraform plan
+terraform apply
+```
+
+**Setup Github actions:**
+
+The build is defined via the github actions workflow in `.github/workflows/main.yml`
+
+As for the deployment, In order for the deployment pipeline to work you will need the following `secrets` set on your github actions:
+
+| Environment   |  Description |  required  |
+|---|---|---|
+| AWS_ACCESS_KEY_ID  | AWS access ID  |   Yes |
+| AWS_SECRET_ACCESS_KEY  | AWS secret access key  |   Yes |
+
+
+Once all setup trigger a deployment then visit the link on the ALB (A record).
+
+
+**Finishing up:**
+
+Remember to run `terraform destroy -auto-approve` once finished with testing.
+
 ### Reference
 
 repo is built on [example-nextjs-emotion11-material-u](https://github.com/Jareechang/example-nextjs-emotion11-material-ui) and [tf-modules](https://github.com/Jareechang/tf-modules).

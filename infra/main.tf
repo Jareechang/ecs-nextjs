@@ -4,6 +4,7 @@ provider "aws" {
 }
 
 locals {
+  # Target port to expose
   target_port = 3000
 }
 
