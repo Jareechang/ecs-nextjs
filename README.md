@@ -39,3 +39,9 @@ repo is built on [example-nextjs-emotion11-material-u](https://github.com/Jareec
 - [material-ui](https://material-ui.com/) @ 4.11
 - [next](https://nextjs.org/docs/getting-started) @ 10.x
 - [polished](https://polished.js.org/docs/) @ 4.x
+- terraform
+- AWS ECS 
+- AWS ECR
+- AWS VPC (subnets, route table, netowrk acl, igw, nat gw)
+- AWS SSM
+- AWS ALB
