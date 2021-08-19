@@ -24,7 +24,7 @@ Visit http://localhost:3000
 ```sh
 docker build -t ecs-nextjs .
 
-docker run -d -p 3000:300 ecs-nextjs:latest
+docker run -d -p 3000:3000 -e PORT=3000 ecs-nextjs:latest
 ```
 
 ### Reference
