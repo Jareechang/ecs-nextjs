@@ -3,6 +3,10 @@ provider "aws" {
   region  = var.aws_region
 }
 
+locals {
+  target_port = 3000
+}
+
 #### Networking (subnets, igw, nat gw, rt etc)
 module "networking" {
     source = "github.com/Jareechang/tf-modules//networking?ref=v1.0.1"
@@ -35,8 +39,8 @@ resource "aws_security_group" "alb_ecs_sg" {
     ## Allow outbound to ecs instances in private subnet
     egress {
         protocol    = "tcp"
-        from_port   = 80
-        to_port     = 80
+        from_port   = local.target_port
+        to_port     = local.target_port
         cidr_blocks = module.networking.private_subnets[*].cidr_block
     }
 }
@@ -45,8 +49,8 @@ resource "aws_security_group" "ecs_sg" {
     vpc_id = module.networking.vpc_id
     ingress {
         protocol         = "tcp"
-        from_port        = 80
-        to_port          = 80
+        from_port        = local.target_port
+        to_port          = local.target_port
         security_groups  = [aws_security_group.alb_ecs_sg.id]
     }
 
@@ -62,7 +66,7 @@ resource "aws_security_group" "ecs_sg" {
 module "ecs_tg" {
     source              = "github.com/Jareechang/tf-modules//alb?ref=v1.0.2"
     create_target_group = true
-    port                = 80
+    port                = local.target_port
     protocol            = "HTTP"
     target_type         = "ip"
     vpc_id              = module.networking.vpc_id
@@ -97,7 +101,7 @@ resource "aws_ecs_service" "web_nodejs" {
     load_balancer {
         target_group_arn = module.ecs_tg.tg.arn
         container_name   = "node-app-image"
-        container_port   = 80
+        container_port   = 3000
     }
 
     network_configuration {

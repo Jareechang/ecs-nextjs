@@ -9,14 +9,14 @@
     ],
     "portMappings": [
       {
-        "containerPort": 80,
-        "hostPort": 80
+        "containerPort": 3000,
+        "hostPort": 3000
       }
     ],
     "environment": [
       {
         "name": "PORT",
-        "value": "80"
+        "value": "3000"
       }
     ],
     "logConfiguration": {
