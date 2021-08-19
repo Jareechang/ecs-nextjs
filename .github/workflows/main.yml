@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Install & Build
         uses: actions/checkout@v2
-      - run: yarn install --frozen-lockfile --production
+      - run: yarn install --frozen-lockfile
       - run: yarn build
 
       - name: optimize node_modules
