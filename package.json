@@ -1,0 +1,30 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@common-web/ts-config": "^1.0.1",
+    "@emotion/core": "^11.0.0",
+    "@emotion/css": "^11.0.0",
+    "@emotion/react": "^11.1.1",
+    "@emotion/server": "^11.0.0",
+    "@material-ui/core": "^4.11.0",
+    "date-fns": "^2.11.1",
+    "gray-matter": "^4.0.2",
+    "next": "^10.0.0",
+    "polished": "^4.0.3",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "remark": "^12.0.0",
+    "remark-html": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.8",
+    "@types/react": "^16.9.56"
+  }
+}
