@@ -14,8 +14,10 @@ jobs:
       - name: Install & Build
         uses: actions/checkout@v2
       - run: yarn install --frozen-lockfile --production
-      - run: yarn build && yarn install --production --ignore-scripts --prefer-offline
+      - run: yarn build
 
+      - name: optimize node_modules
+      - run: yarn install --production --ignore-scripts --prefer-offline
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
