@@ -2,7 +2,9 @@
 
 This a demo app running on AWS ECS with full CI/CD via github actions deployed to AWS ECR.
 
-- [Architecture](#architecture) - todo
+- [Architecture](#architecture)
+  - [AWS Infrastructure](#infrastructure-aws)
+  - [CI/CD workflow](#cicd-workflow)
 - [Getting Started](#getting-started)
 - [Reference](#reference)
 - [Technologies](#technologies)
@@ -14,9 +16,9 @@ This a demo app running on AWS ECS with full CI/CD via github actions deployed t
 
 ![AWS ECS architecture](./images/infrastructure/ecs-nextjs.svg)
 
-#### CI/CD
+#### CI/CD Workflow
 
-TODO
+![AWS ECS Deployment CI/CD](./images/cicd/ecs-nextjs-cicd.svg)
 
 ### Getting Started
 
