@@ -9,6 +9,13 @@ This a demo app running on AWS ECS with full CI/CD via github actions deployed t
 
 ### Architecture
 
+
+#### Infrastructure (AWS)
+
+![AWS ECS architecture](./images/infrastructure/ecs-nextjs.svg)
+
+#### CI/CD
+
 TODO
 
 ### Getting Started
