@@ -67,4 +67,4 @@ jobs:
           wait-for-service-stability: true
           codedeploy-appspec: appspec.json
           codedeploy-application: node-app-prod-nextjs
-          codedeploy-deployment-group: node-app-prod-nextjs
+          codedeploy-deployment-group: node-app-prod-nextjs-deploy-group
