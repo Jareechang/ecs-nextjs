@@ -292,7 +292,7 @@ resource "aws_codedeploy_app" "node_app" {
 
 module "http_error_alarm" {
     source             = "github.com/Jareechang/tf-modules//cloudwatch/alarms/alb-http-errors?ref=v1.0.8"
-    evaluation_periods = "4"
+    evaluation_periods = "2"
     threshold          = "10"
     arn_suffix         = module.alb.lb.arn_suffix
     project_id         = var.project_id
@@ -306,7 +306,7 @@ resource "aws_codedeploy_deployment_group" "node_app" {
 
   auto_rollback_configuration {
     enabled = true
-    events  = ["DEPLOYMENT_FAILURE"]
+    events  = ["DEPLOYMENT_FAILURE", "DEPLOYMENT_STOP_ON_ALARM"]
   }
 
   alarm_configuration {
@@ -323,7 +323,7 @@ resource "aws_codedeploy_deployment_group" "node_app" {
 
     terminate_blue_instances_on_deployment_success {
       action                           = "TERMINATE"
-      termination_wait_time_in_minutes = 5
+      termination_wait_time_in_minutes = 20
     }
   }
 
