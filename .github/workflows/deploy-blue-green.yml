@@ -42,8 +42,8 @@ jobs:
 
       - name: Update App Spec File
         run: |
-          sed -ie "s/<CONTAINER_NAME>/$CONTAINER_NAME" ./appspec.json
-          sed -ie "s/<CONTAINER_PORT>/$CONTAINER_PORT" ./appspec.json
+          sed -ie "s/<CONTAINER_NAME>/$CONTAINER_NAME/" ./appspec.json
+          sed -ie "s/<CONTAINER_PORT>/$CONTAINER_PORT/" ./appspec.json
           echo "Resulting appspec: \n"
           cat ./appspec.json
         env:
