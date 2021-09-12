@@ -64,7 +64,18 @@ resource "aws_security_group" "ecs_sg" {
     }
 }
 
-module "ecs_tg" {
+module "ecs_tg_blue" {
+    project_id          = "${var.project_id}-blue"
+    source              = "github.com/Jareechang/tf-modules//alb?ref=v1.0.2"
+    create_target_group = true
+    port                = local.target_port
+    protocol            = "HTTP"
+    target_type         = "ip"
+    vpc_id              = module.networking.vpc_id
+}
+
+module "ecs_tg_green" {
+    project_id          = "${var.project_id}-green"
     source              = "github.com/Jareechang/tf-modules//alb?ref=v1.0.2"
     create_target_group = true
     port                = local.target_port
@@ -81,7 +92,7 @@ module "alb" {
     load_balancer_type = "application"
     security_groups    = [aws_security_group.alb_ecs_sg.id]
     subnets            = module.networking.public_subnets[*].id
-    target_group       = module.ecs_tg.tg.arn
+    target_group       = module.ecs_tg_blue.tg.arn
 }
 
 resource "aws_ecs_cluster" "web_cluster_node" {
@@ -92,7 +103,7 @@ resource "aws_ecs_cluster" "web_cluster_node" {
     }
 }
 
-resource "aws_ecs_service" "web_nodejs" {
+resource "aws_ecs_service" "web_service" {
     name            = "web-nodejs"
     cluster         = aws_ecs_cluster.web_cluster_node.id
     task_definition = aws_ecs_task_definition.nodejs.arn
@@ -100,7 +111,7 @@ resource "aws_ecs_service" "web_nodejs" {
     launch_type = "FARGATE"
 
     load_balancer {
-        target_group_arn = module.ecs_tg.tg.arn
+        target_group_arn = module.ecs_tg_blue.tg.arn
         container_name   = "node-app-image"
         container_port   = 3000
     }
@@ -110,13 +121,17 @@ resource "aws_ecs_service" "web_nodejs" {
         security_groups = [aws_security_group.ecs_sg.id]
     }
 
+    deployment_controller {
+      type = "CODE_DEPLOY"
+    }
+
     tags = {
         Name = "${var.project_id}-${var.env}-ecs-service"
     }
 
     depends_on = [
         module.alb.lb,
-        module.ecs_tg.tg
+        module.ecs_tg_blue.tg
     ]
 }
 
@@ -168,7 +183,7 @@ data "aws_caller_identity" "current" {}
 
 ## CI/CD user role for managing pipeline for AWS ECR resources
 module "ecr_ecs_ci_user" {
-    source            = "github.com/Jareechang/tf-modules//iam/ecr?ref=v1.0.1"
+    source            = "github.com/Jareechang/tf-modules//iam/ecr?ref=v1.0.7"
     env               = var.env
     project_id        = var.project_id
     create_ci_user    = true
@@ -176,16 +191,35 @@ module "ecr_ecs_ci_user" {
         "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/web/${var.project_id}",
         "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/web/${var.project_id}/*"
     ]
+
+    other_iam_statements = {
+      codedeploy = {
+        actions = [
+          "codedeploy:GetDeploymentGroup",
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentConfig",
+          "codedeploy:RegisterApplicationRevision"
+        ]
+        effect = "Allow"
+        resources = [
+          "*"
+          #aws_codedeploy_app.node_app.arn,
+          #aws_codedeploy_deployment_group.node_app.arn,
+          #"arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentconfig:*"
+        ]
+      }
+    }
 }
 
 ## ECS Execution and Task roles
 module "ecs_roles" {
-    source                    = "github.com/Jareechang/tf-modules//iam/ecs?ref=v1.0.1"
+    source                    = "github.com/Jareechang/tf-modules//iam/ecs?ref=v1.0.7"
     create_ecs_execution_role = true
     create_ecs_task_role      = true
 
     # Extend baseline policy statements
-    ecs_execution_policies_extension = {
+    ecs_execution_other_iam_statements = {
         ssm = {
             actions = [
                 "ssm:GetParameter",
@@ -218,7 +252,89 @@ data "template_file" "task_def_generated" {
 }
 
 resource "local_file" "output_task_def" {
-    content         = data.template_file.task_def_generated.rendered
-    file_permission = "644"
-    filename        = "./task-definitions/service.latest.json"
+  content         = data.template_file.task_def_generated.rendered
+  file_permission = "644"
+  filename        = "./task-definitions/service.latest.json"
+}
+
+data "aws_iam_policy_document" "codedeploy_assume_role" {
+  version = "2012-10-17"
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = [
+        "codedeploy.amazonaws.com"
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role" "codedeploy_role" {
+  name               = "CodeDeployRole${var.project_id}"
+  description        = "CodeDeployRole for ${var.project_id} in ${var.env}"
+  assume_role_policy = data.aws_iam_policy_document.codedeploy_assume_role.json
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "codedeploy_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
+  role       = aws_iam_role.codedeploy_role.name
+}
+
+resource "aws_codedeploy_app" "node_app" {
+  compute_platform = "ECS"
+  name             = "${var.project_id}-${var.env}-nextjs"
+}
+
+resource "aws_codedeploy_deployment_group" "node_app" {
+  app_name               = aws_codedeploy_app.node_app.name
+  deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
+  deployment_group_name  = "${var.project_id}-${var.env}-deploy-group"
+  service_role_arn       = aws_iam_role.codedeploy_role.arn
+
+  auto_rollback_configuration {
+    enabled = true
+    events  = ["DEPLOYMENT_FAILURE"]
+  }
+
+  blue_green_deployment_config {
+    deployment_ready_option {
+      action_on_timeout = "CONTINUE_DEPLOYMENT"
+    }
+
+    terminate_blue_instances_on_deployment_success {
+      action                           = "TERMINATE"
+      termination_wait_time_in_minutes = 5
+    }
+  }
+
+  deployment_style {
+    deployment_option = "WITH_TRAFFIC_CONTROL"
+    deployment_type   = "BLUE_GREEN"
+  }
+
+  ecs_service {
+    cluster_name = aws_ecs_cluster.web_cluster_node.name
+    service_name = aws_ecs_service.web_service.name
+  }
+
+  load_balancer_info {
+    target_group_pair_info {
+      prod_traffic_route {
+        listener_arns = [module.alb.http_listener.arn]
+      }
+
+      target_group {
+        name = module.ecs_tg_blue.tg.name
+      }
+
+      target_group {
+        name = module.ecs_tg_green.tg.name
+      }
+    }
+  }
 }

@@ -39,3 +39,32 @@ jobs:
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
             echo "new image : $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
             echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Update App Spec File
+        run: |
+          sed -e -i "s/<CONTAINER_NAME>/$CONTAINER_NAME" ./appspec.json
+          sed -e -i "s/<CONTAINER_PORT>/$CONTAINER_PORT" ./appspec.json
+          echo "Resulting appspec: \n"
+          cat ./appspec.json
+        env:
+          CONTAINER_NAME: node-app-image
+          CONTAINER_PORT: 3000
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+            task-definition: infra/task-definitions/service.latest.json
+            container-name: node-app-image
+            image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: web-nodejs
+          cluster: web-cluster-node
+          wait-for-service-stability: true
+          codedeploy-appspec: appspec.json
+          codedeploy-application: node-app-prod-nextjs
+          codedeploy-deployment-group: node-app-prod-nextjs
