@@ -290,15 +290,30 @@ resource "aws_codedeploy_app" "node_app" {
   name             = "${var.project_id}-${var.env}-nextjs"
 }
 
+module "http_error_alarm" {
+    source             = "github.com/Jareechang/tf-modules//cloudwatch/alarms/alb-http-errors?ref=v1.0.8"
+    evaluation_periods = "4"
+    threshold          = "10"
+    arn_suffix         = module.alb.lb.arn_suffix
+    project_id         = var.project_id
+}
+
 resource "aws_codedeploy_deployment_group" "node_app" {
   app_name               = aws_codedeploy_app.node_app.name
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
-  deployment_group_name  = "${var.project_id}-${var.env}-deploy-group"
+  deployment_group_name  = "${var.project_id}-${var.env}-nextjs-deploy-group"
   service_role_arn       = aws_iam_role.codedeploy_role.arn
 
   auto_rollback_configuration {
     enabled = true
     events  = ["DEPLOYMENT_FAILURE"]
+  }
+
+  alarm_configuration {
+    alarms  = [
+      module.http_error_alarm.name
+    ]
+    enabled = true
   }
 
   blue_green_deployment_config {
