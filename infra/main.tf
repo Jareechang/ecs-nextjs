@@ -298,9 +298,21 @@ module "http_error_alarm" {
     project_id         = var.project_id
 }
 
+resource "aws_codedeploy_deployment_config" "custom_canary" {
+  deployment_config_name = "EcsCanary-25Percent-20Minutes"
+  compute_platform       = "ECS"
+  traffic_routing_config {
+    type = "TimeBasedCanary"
+    time_based_canary {
+      interval   = 20
+      percentage = 25
+    }
+  }
+}
+
 resource "aws_codedeploy_deployment_group" "node_app" {
   app_name               = aws_codedeploy_app.node_app.name
-  deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
+  deployment_config_name = aws_codedeploy_deployment_config.custom_canary.id
   deployment_group_name  = "${var.project_id}-${var.env}-nextjs-deploy-group"
   service_role_arn       = aws_iam_role.codedeploy_role.arn
 
