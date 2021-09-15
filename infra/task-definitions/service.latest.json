@@ -6,7 +6,7 @@
   ],
   "cpu": "512",
   "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::632610202813:role/Policy-Ecs-Execution-Role",
+  "executionRoleArn": "arn:aws:iam::713664742867:role/Policy-Ecs-Execution-Role",
   "containerDefinitions": [
     {
       "name": "node-app-image",
@@ -35,7 +35,7 @@
       "secrets": [
         {
           "name": "DATABASE_PASSWORD",
-          "valueFrom": "arn:aws:ssm:us-east-1:632610202813:parameter/web/node-app/database/secret"
+          "valueFrom": "arn:aws:ssm:us-east-1:713664742867:parameter/web/node-app/database/secret"
         }
       ]
     }
