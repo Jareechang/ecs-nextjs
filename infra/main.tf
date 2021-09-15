@@ -299,12 +299,12 @@ module "http_error_alarm" {
 }
 
 resource "aws_codedeploy_deployment_config" "custom_canary" {
-  deployment_config_name = "EcsCanary-25Percent-20Minutes"
+  deployment_config_name = "EcsCanary25Percent20Minutes"
   compute_platform       = "ECS"
   traffic_routing_config {
     type = "TimeBasedCanary"
     time_based_canary {
-      interval   = 20
+      interval   = 10
       percentage = 25
     }
   }
@@ -335,7 +335,7 @@ resource "aws_codedeploy_deployment_group" "node_app" {
 
     terminate_blue_instances_on_deployment_success {
       action                           = "TERMINATE"
-      termination_wait_time_in_minutes = 20
+      termination_wait_time_in_minutes = 0
     }
   }
 
