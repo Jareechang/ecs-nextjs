@@ -290,6 +290,18 @@ resource "aws_codedeploy_app" "node_app" {
   name             = "${var.project_id}-${var.env}-nextjs"
 }
 
+resource "aws_cloudwatch_log_metric_filter" "app_errors" {
+  name           = "MyAppAccessCount"
+  pattern        = "[Error]"
+  log_group_name = aws_cloudwatch_log_group.ecs.name
+  metric_transformation {
+    name      = "AppLogErrors-Ecs-${var.project}"
+    namespace = "${var.env}"
+    value     = "1"
+  }
+}
+
+
 module "http_error_alarm" {
     source             = "github.com/Jareechang/tf-modules//cloudwatch/alarms/alb-http-errors?ref=v1.0.8"
     evaluation_periods = "2"
@@ -323,7 +335,8 @@ resource "aws_codedeploy_deployment_group" "node_app" {
 
   alarm_configuration {
     alarms  = [
-      module.http_error_alarm.name
+      module.http_error_alarm.name,
+      aws_cloudwatch_log_metric_filter.app_errors.name
     ]
     enabled = true
   }
