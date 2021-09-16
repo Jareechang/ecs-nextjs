@@ -1,4 +1,4 @@
 export default (req, res) => {
   console.log('[Error] some error occurred');
-  res.status(200).json({ text: 'Hello' })
+  res.status(200).json({ text: 'Hello', version: 1 });
 }
