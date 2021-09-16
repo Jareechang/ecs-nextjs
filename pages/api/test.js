@@ -5,6 +5,6 @@ export default (req, res) => {
   //});
   res.status(200).json({
     text: 'success',
-    version: 3
+    version: 4
   });
 }
