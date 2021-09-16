@@ -290,17 +290,71 @@ resource "aws_codedeploy_app" "node_app" {
   name             = "${var.project_id}-${var.env}-nextjs"
 }
 
-resource "aws_cloudwatch_log_metric_filter" "app_errors" {
-  name           = "MyAppAccessCount"
-  pattern        = "[Error]"
-  log_group_name = aws_cloudwatch_log_group.ecs.name
-  metric_transformation {
-    name      = "AppLogErrors-Ecs-${var.project}"
-    namespace = "${var.env}"
-    value     = "1"
-  }
+module "application_error_alarm" {
+    source             = "github.com/Jareechang/tf-modules//cloudwatch/alarms/application-log-errors?ref=v1.0.12"
+    evaluation_periods = "2"
+    threshold          = "10"
+    arn_suffix         = module.alb.lb.arn_suffix
+    project_id         = var.project_id
+    env                = var.env
+    pattern            = "[Error]"
+    log_group_name     = aws_cloudwatch_log_group.ecs.name
+    metric_name        = "ApplicationErrorCount"
+    metric_namespace   = "ECS/${var.project_id}-${var.env}"
 }
 
+#resource "aws_cloudwatch_log_metric_filter" "app_errors" {
+  #name           = "MyAppAccessCount"
+  #pattern        = "[Error]"
+  #log_group_name = aws_cloudwatch_log_group.ecs.name
+  #metric_transformation {
+    #name          = "ApplicationErrorCount"
+    #namespace     = "ECS/${var.project_id}-${var.env}"
+    #value         = "1"
+    #default_value = "0"
+  #}
+#}
+
+#resource "aws_cloudwatch_metric_alarm" "error_log_alarm" {
+  #alarm_name                = "application-error-rate-${var.project_id}-${var.env}"
+  #comparison_operator       = "GreaterThanOrEqualToThreshold"
+  #evaluation_periods        = "2"
+  #threshold                 = "10"
+  #alarm_description         = "Application error rate has exceeded 10%"
+  #insufficient_data_actions = []
+
+  #metric_query {
+    #id          = "e1"
+    #expression  = "m2/m1*100"
+    #label       = "Application Error Rate"
+    #return_data = "true"
+  #}
+
+  #metric_query {
+    #id = "m1"
+    #metric {
+      #metric_name = "RequestCount"
+      #namespace   = "AWS/ApplicationELB"
+      #period      = "120"
+      #stat        = "Sum"
+      #unit        = "Count"
+
+      #dimensions = {
+        #LoadBalancer = module.alb.lb.arn_suffix
+      #}
+    #}
+  #}
+
+  #metric_query {
+    #id = "m2"
+    #metric {
+      #metric_name = "ApplicationErrorCount"
+      #namespace   = "ECS/${var.project_id}-${var.env}"
+      #period      = "120"
+      #stat        = "Sum"
+    #}
+  #}
+#}
 
 module "http_error_alarm" {
     source             = "github.com/Jareechang/tf-modules//cloudwatch/alarms/alb-http-errors?ref=v1.0.8"
@@ -316,7 +370,8 @@ resource "aws_codedeploy_deployment_config" "custom_canary" {
   traffic_routing_config {
     type = "TimeBasedCanary"
     time_based_canary {
-      interval   = 10
+      #interval   = 10
+      interval   = 5
       percentage = 25
     }
   }
@@ -336,7 +391,7 @@ resource "aws_codedeploy_deployment_group" "node_app" {
   alarm_configuration {
     alarms  = [
       module.http_error_alarm.name,
-      aws_cloudwatch_log_metric_filter.app_errors.name
+      module.application_error_alarm.name
     ]
     enabled = true
   }
@@ -376,5 +431,9 @@ resource "aws_codedeploy_deployment_group" "node_app" {
         name = module.ecs_tg_green.tg.name
       }
     }
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
