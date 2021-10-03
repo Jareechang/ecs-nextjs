@@ -18,7 +18,34 @@ This a demo app running on AWS ECS with full CI/CD via github actions deployed t
 
 #### CI/CD Workflow
 
+##### CI and initial deployment
+
 ![AWS ECS Deployment CI/CD](./images/cicd/ecs-nextjs-cicd.svg)
+
+##### Continuous delivery (CD) 
+
+![AWS ECS Blue Green Deployment](./images/cicd/ecs-nextjs-blue-green.svg)
+
+**Steps:**  
+
+1. The deployment starts from github actions to trigger the AWS Codedeploy deployment group
+2. AWS Codedeploy provisions new ECS tasks and routes 25% of traffic over to new deployment
+3. AWS Codedeploy deployment either completes within 10 minutes or rollbacks if set thresholds are exceeded
+
+**Description:**
+
+The continous delivery is using leveraging codedeploy to perform a time based blue-green canary.
+
+**Time Interval:** 10 minutes
+**Percentage:** 25% 
+
+So, 25% of the traffic is shifted over to new deployment over an interval of 10 minutes (2 - 3 alarm periods on AWS Cloudwatch).
+
+This setup also includes automatic rollback based on threshold on metrics in cloudwatch (Application load balancer http 5xx, Application errors).
+
+This deployment strategy allows for early error detection while minimizing impact in event of errors and fast rollback with the blue-green approach.
+
+**Note:** The feature is available on the branch [feature-blue-green](https://github.com/Jareechang/ecs-nextjs/tree/feature-blue-green)
 
 ### Getting Started
 
