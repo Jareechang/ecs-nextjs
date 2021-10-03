@@ -34,7 +34,7 @@ This a demo app running on AWS ECS with full CI/CD via github actions deployed t
 
 **Description:**
 
-The continous delivery is using leveraging codedeploy to perform a time based blue-green canary.
+The continous delivery is leveraging codedeploy to perform a time based blue-green canary.
 
 **Time Interval:** 10 minutes
 **Percentage:** 25% 
