@@ -36,8 +36,8 @@ This a demo app running on AWS ECS with full CI/CD via github actions deployed t
 
 The continous delivery is leveraging codedeploy to perform a time based blue-green canary.
 
-**Time Interval:** 10 minutes
-**Percentage:** 25% 
+**Time Interval:** 10 minutes  
+**Percentage:** 25%   
 
 So, 25% of the traffic is shifted over to new deployment over an interval of 10 minutes (2 - 3 alarm periods on AWS Cloudwatch).
 
